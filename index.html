@@ -96,7 +96,7 @@
 <body>
 
     <div class="container">
-        <h1>Live Visitors</h1>
+        <h1>Total Page Views</h1>
         <!-- Angka akan muncul di sini -->
         <div class="counter" id="viewCounter">0</div>
     </div>
@@ -106,8 +106,7 @@
     </div>
 
     <script>
-        // MASUKKAN URL CLOUDFLARE KAMU DI SINI (SETELAH DEPLOY WRANGLER)
-        // Contoh: 'https://my-view-api.username.workers.dev'
+        // MASUKKAN URL CLOUDFLARE KAMU DI SINI
         const API_URL = 'MASUKKAN_URL_API_CLOUDFLARE_DISINI'; 
         
         const counterEl = document.getElementById('viewCounter');
@@ -115,28 +114,24 @@
 
         // FUNGSI 1: Update Angka + Animasi di Layar
         function updateUI(newViews) {
-            // Jika angka dari database lebih besar, jalankan animasi pop-up
+            // Animasi hanya jalan jika angka bertambah (menghindari kedap-kedip saat loading awal)
             if (newViews > currentViews && currentViews !== 0) {
                 counterEl.classList.add('update-anim');
                 setTimeout(() => counterEl.classList.remove('update-anim'), 300);
             }
             currentViews = newViews;
             
-            // Ubah format angka (misal: 1500 menjadi 1.500)
+            // Format angka (misal: 1500 menjadi 1.500)
             counterEl.innerText = newViews.toLocaleString('id-ID');
         }
 
-        // FUNGSI 2: Tambah pengunjung jika baru pertama kali buka web
+        // FUNGSI 2: Tambah views (Dijalankan SETIAP KALI web direfresh/dibuka)
         async function recordVisit() {
             try {
-                if (!localStorage.getItem('hasVisited')) {
-                    const res = await fetch(`${API_URL}/visit`, { method: 'POST' });
-                    const data = await res.json();
-                    updateUI(data.views);
-                    localStorage.setItem('hasVisited', 'true'); // Tandai user sudah visit
-                } else {
-                    fetchViews(); // Kalau sudah pernah visit, cukup ambil datanya saja
-                }
+                // Langsung tembak API untuk tambah +1 tanpa cek localStorage lagi
+                const res = await fetch(`${API_URL}/visit`, { method: 'POST' });
+                const data = await res.json();
+                updateUI(data.views);
             } catch (err) {
                 console.error('Gagal mencatat visit:', err);
                 counterEl.innerText = "Error";
@@ -154,17 +149,17 @@
             }
         }
 
-        // FUNGSI 4: Jalankan semua perintah saat web selesai loading
+        // FUNGSI 4: Jalankan saat web selesai loading
         window.onload = () => {
             if (API_URL === 'MASUKKAN_URL_API_CLOUDFLARE_DISINI') {
                 counterEl.innerHTML = "<span style='font-size: 20px'>Masukkan URL API dulu di kodenya!</span>";
                 return;
             }
 
-            // Catat visit
+            // 1. Langsung catat kunjungan (hitung +1) setiap kali web dimuat/refresh
             recordVisit();
             
-            // Loop ambil data setiap 3 detik (Menciptakan efek Real-time)
+            // 2. Loop ambil data setiap 3 detik agar tetap sinkron/real-time dengan user lain
             setInterval(fetchViews, 3000); 
         };
     </script>

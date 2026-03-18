@@ -3,166 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Realtime View Counter</title>
-    
-    <!-- Import Font Modern dari Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap" rel="stylesheet">
-    
+    <title>Realtime Counter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;900&display=swap" rel="stylesheet">
     <style>
-        /* RESET & SETUP FONT */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* TEMA HITAM PEKAT */
-        body {
-            background-color: #050505; 
-            color: #ffffff; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-            overflow: hidden;
-        }
-
-        /* KOTAK DESAIN UTAMA */
-        .container {
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 60px 100px;
-            border-radius: 24px;
-            background: linear-gradient(145deg, #0a0a0a, #000000);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-            position: relative;
-        }
-
-        /* GLOWING EFFECT DI BELAKANG KOTAK */
-        .container::before {
-            content: '';
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, #333, #000, #333);
-            z-index: -1;
-            border-radius: 26px;
-            opacity: 0.3;
-        }
-
-        /* TEKS JUDUL */
-        h1 {
-            font-size: 1rem;
-            font-weight: 600;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        /* TEKS ANGKA PENGUNJUNG */
-        .counter {
-            font-size: 7rem;
-            font-weight: 900;
-            letter-spacing: -3px;
-            display: inline-block;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0 0 20px rgba(255,255,255,0.1);
-        }
-
-        /* KELAS ANIMASI SAAT ANGKA NAIK */
-        .counter.update-anim {
-            transform: scale(1.15) translateY(-5px);
-            color: #888888;
-            text-shadow: 0 0 40px rgba(255,255,255,0.4);
-        }
-
-        /* TEKS FOOTER BAWAH */
-        .footer {
-            margin-top: 50px;
-            font-size: 0.75rem;
-            color: #333;
-            letter-spacing: 2px;
-        }
-
-        /* RESPONSIF UNTUK HP */
-        @media (max-width: 600px) {
-            .container { padding: 40px 30px; width: 90%; }
-            .counter { font-size: 4.5rem; }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #050505; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+        .container { border: 1px solid rgba(255, 255, 255, 0.1); padding: 50px 80px; border-radius: 30px; background: #000; }
+        h1 { font-size: 0.9rem; letter-spacing: 4px; text-transform: uppercase; color: #555; margin-bottom: 15px; }
+        .counter { font-size: 7rem; font-weight: 900; transition: 0.3s; }
+        .counter.up { transform: scale(1.1); color: #aaa; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Total Page Views</h1>
-        <!-- Angka akan muncul di sini -->
-        <div class="counter" id="viewCounter">0</div>
-    </div>
-    
-    <div class="footer">
-        LIVE SYNC • CLOUDFLARE EDGE • MONGODB
+        <h1>Total Views</h1>
+        <div class="counter" id="count">0</div>
     </div>
 
     <script>
-        // MASUKKAN URL CLOUDFLARE KAMU DI SINI
-        const API_URL = 'MASUKKAN_URL_API_CLOUDFLARE_DISINI'; 
-        
-        const counterEl = document.getElementById('viewCounter');
-        let currentViews = 0;
+        // OTOMATIS MENGGUNAKAN DOMAIN TEMPAT FILE INI BERADA
+        const API = window.location.origin; 
+        const el = document.getElementById('count');
+        let current = 0;
 
-        // FUNGSI 1: Update Angka + Animasi di Layar
-        function updateUI(newViews) {
-            // Animasi hanya jalan jika angka bertambah (menghindari kedap-kedip saat loading awal)
-            if (newViews > currentViews && currentViews !== 0) {
-                counterEl.classList.add('update-anim');
-                setTimeout(() => counterEl.classList.remove('update-anim'), 300);
+        function update(val) {
+            if (val > current && current !== 0) {
+                el.classList.add('up');
+                setTimeout(() => el.classList.remove('up'), 200);
             }
-            currentViews = newViews;
-            
-            // Format angka (misal: 1500 menjadi 1.500)
-            counterEl.innerText = newViews.toLocaleString('id-ID');
+            current = val;
+            el.innerText = val.toLocaleString('id-ID');
         }
 
-        // FUNGSI 2: Tambah views (Dijalankan SETIAP KALI web direfresh/dibuka)
-        async function recordVisit() {
+        async function init() {
             try {
-                // Langsung tembak API untuk tambah +1 tanpa cek localStorage lagi
-                const res = await fetch(`${API_URL}/visit`, { method: 'POST' });
+                // Mencatat kunjungan baru (Refresh = +1)
+                const res = await fetch(`${API}/visit`, { method: 'POST' });
                 const data = await res.json();
-                updateUI(data.views);
-            } catch (err) {
-                console.error('Gagal mencatat visit:', err);
-                counterEl.innerText = "Error";
-            }
+                update(data.views);
+            } catch (e) { console.error(e); }
         }
 
-        // FUNGSI 3: Ambil data terbaru dari database (Real-time polling)
-        async function fetchViews() {
+        async function sync() {
             try {
-                const res = await fetch(`${API_URL}/views`);
+                // Ambil data terbaru (Realtime sync)
+                const res = await fetch(`${API}/views`);
                 const data = await res.json();
-                updateUI(data.views);
-            } catch (err) {
-                console.error('Gagal mengambil data:', err);
-            }
+                update(data.views);
+            } catch (e) { console.error(e); }
         }
 
-        // FUNGSI 4: Jalankan saat web selesai loading
         window.onload = () => {
-            if (API_URL === 'MASUKKAN_URL_API_CLOUDFLARE_DISINI') {
-                counterEl.innerHTML = "<span style='font-size: 20px'>Masukkan URL API dulu di kodenya!</span>";
-                return;
-            }
-
-            // 1. Langsung catat kunjungan (hitung +1) setiap kali web dimuat/refresh
-            recordVisit();
-            
-            // 2. Loop ambil data setiap 3 detik agar tetap sinkron/real-time dengan user lain
-            setInterval(fetchViews, 3000); 
+            init();
+            setInterval(sync, 3000); // Sinkronisasi setiap 3 detik
         };
     </script>
-
 </body>
 </html>

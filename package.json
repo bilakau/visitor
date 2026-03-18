@@ -1,15 +1,8 @@
 {
-  "name": "my-view-api",
+  "name": "visitor",
   "version": "1.0.0",
-  "description": "API View Counter",
   "main": "src/index.js",
-  "scripts": {
-    "dev": "node src/index.js"
-  },
   "dependencies": {
     "mongodb": "^6.5.0"
-  },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
   }
 }

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Realtime View Counter</title>
+    <title>Realtime Counter | Minimalist</title>
     
-    <!-- Import Font Modern dari Google -->
+    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap" rel="stylesheet">
     
     <style>
-        /* RESET & SETUP FONT */
+        /* CSS RESET */
         * {
             margin: 0;
             padding: 0;
@@ -17,7 +17,7 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* TEMA HITAM PEKAT */
+        /* BODY SETUP - TEMA HITAM PEKAT */
         body {
             background-color: #050505; 
             color: #ffffff; 
@@ -30,66 +30,68 @@
             overflow: hidden;
         }
 
-        /* KOTAK DESAIN UTAMA */
+        /* CONTAINER UTAMA */
         .container {
             border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 60px 100px;
-            border-radius: 24px;
+            padding: 60px 80px;
+            border-radius: 30px;
             background: linear-gradient(145deg, #0a0a0a, #000000);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
             position: relative;
+            z-index: 1;
         }
 
-        /* GLOWING EFFECT DI BELAKANG KOTAK */
-        .container::before {
+        /* EFEK GLOW HALUS DI BELAKANG */
+        .container::after {
             content: '';
             position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, #333, #000, #333);
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 30px;
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
             z-index: -1;
-            border-radius: 26px;
-            opacity: 0.3;
+            pointer-events: none;
         }
 
-        /* TEKS JUDUL */
+        /* JUDUL ATAS */
         h1 {
-            font-size: 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            letter-spacing: 5px;
+            letter-spacing: 6px;
             text-transform: uppercase;
-            color: #666;
-            margin-bottom: 20px;
+            color: #555;
+            margin-bottom: 25px;
         }
 
-        /* TEKS ANGKA PENGUNJUNG */
+        /* ANGKA COUNTER */
         .counter {
-            font-size: 7rem;
+            font-size: 8rem;
             font-weight: 900;
-            letter-spacing: -3px;
+            letter-spacing: -4px;
             display: inline-block;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0 0 20px rgba(255,255,255,0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            line-height: 1;
         }
 
-        /* KELAS ANIMASI SAAT ANGKA NAIK */
-        .counter.update-anim {
-            transform: scale(1.15) translateY(-5px);
-            color: #888888;
-            text-shadow: 0 0 40px rgba(255,255,255,0.4);
+        /* ANIMASI SAAT ANGKA BERUBAH */
+        .counter.pulse {
+            transform: scale(1.1);
+            color: #888;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
         }
 
-        /* TEKS FOOTER BAWAH */
+        /* FOOTER KETERANGAN */
         .footer {
             margin-top: 50px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #333;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
 
-        /* RESPONSIF UNTUK HP */
+        /* RESPONSIVE UNTUK LAYAR KECIL (HP) */
         @media (max-width: 600px) {
-            .container { padding: 40px 30px; width: 90%; }
-            .counter { font-size: 4.5rem; }
+            .container { padding: 50px 30px; width: 85%; }
+            .counter { font-size: 5rem; }
         }
     </style>
 </head>
@@ -97,70 +99,66 @@
 
     <div class="container">
         <h1>Total Page Views</h1>
-        <!-- Angka akan muncul di sini -->
-        <div class="counter" id="viewCounter">0</div>
+        <!-- Tempat angka muncul -->
+        <div class="counter" id="viewCount">0</div>
     </div>
     
     <div class="footer">
-        LIVE SYNC • CLOUDFLARE EDGE • MONGODB
+        Realtime Sync • Edge Network • MongoDB
     </div>
 
     <script>
-        // MASUKKAN URL CLOUDFLARE KAMU DI SINI
-        const API_URL = 'https://visitor.guardianmarx.workers.dev'; 
+        // MENGGUNAKAN WINDOW.LOCATION.ORIGIN (Otomatis deteksi URL Worker kamu)
+        const API_URL = window.location.origin; 
         
-        const counterEl = document.getElementById('viewCounter');
-        let currentViews = 0;
+        const countDisplay = document.getElementById('viewCount');
+        let currentVal = 0;
 
-        // FUNGSI 1: Update Angka + Animasi di Layar
-        function updateUI(newViews) {
-            // Animasi hanya jalan jika angka bertambah (menghindari kedap-kedip saat loading awal)
-            if (newViews > currentViews && currentViews !== 0) {
-                counterEl.classList.add('update-anim');
-                setTimeout(() => counterEl.classList.remove('update-anim'), 300);
+        // FUNGSI: Memperbarui tampilan angka dengan animasi
+        function updateDisplay(newVal) {
+            // Animasi hanya jika angka bertambah
+            if (newVal > currentVal && currentVal !== 0) {
+                countDisplay.classList.add('pulse');
+                setTimeout(() => countDisplay.classList.remove('pulse'), 300);
             }
-            currentViews = newViews;
-            
-            // Format angka (misal: 1500 menjadi 1.500)
-            counterEl.innerText = newViews.toLocaleString('id-ID');
+            currentVal = newVal;
+            // Format angka ribuan dengan titik (contoh: 1.250)
+            countDisplay.innerText = newVal.toLocaleString('id-ID');
         }
 
-        // FUNGSI 2: Tambah views (Dijalankan SETIAP KALI web direfresh/dibuka)
+        // FUNGSI: Mencatat kunjungan (Hitung +1 setiap kali refresh)
         async function recordVisit() {
             try {
-                // Langsung tembak API untuk tambah +1 tanpa cek localStorage lagi
-                const res = await fetch(`${API_URL}/visit`, { method: 'POST' });
-                const data = await res.json();
-                updateUI(data.views);
+                const response = await fetch(`${API_URL}/visit`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.views) updateDisplay(data.views);
             } catch (err) {
-                console.error('Gagal mencatat visit:', err);
-                counterEl.innerText = "Error";
+                console.error("Gagal mencatat kunjungan:", err);
+                countDisplay.innerText = "Error";
             }
         }
 
-        // FUNGSI 3: Ambil data terbaru dari database (Real-time polling)
-        async function fetchViews() {
+        // FUNGSI: Mengambil data terbaru secara realtime (Polling)
+        async function fetchRealtimeData() {
             try {
-                const res = await fetch(`${API_URL}/views`);
-                const data = await res.json();
-                updateUI(data.views);
+                const response = await fetch(`${API_URL}/views`);
+                const data = await response.json();
+                if (data.views) updateDisplay(data.views);
             } catch (err) {
-                console.error('Gagal mengambil data:', err);
+                console.error("Gagal sinkronisasi data:", err);
             }
         }
 
-        // FUNGSI 4: Jalankan saat web selesai loading
+        // JALANKAN SAAT HALAMAN DIMUAT
         window.onload = () => {
-            if (API_URL === 'https://visitor.guardianmarx.workers.dev') {
-                counterEl.innerHTML = "<span style='font-size: 20px'>Masukkan URL API dulu di kodenya!</span>";
-                return;
-            }
-
-            // 1. Langsung catat kunjungan (hitung +1) setiap kali web dimuat/refresh
+            // 1. Catat kunjungan (tambah +1 di database)
             recordVisit();
             
-            // 2. Loop ambil data setiap 3 detik agar tetap sinkron/real-time dengan user lain
-            setInterval(fetchViews, 3000); 
+            // 2. Cek data terbaru setiap 3 detik (Sync dengan user lain)
+            setInterval(fetchRealtimeData, 3000); 
         };
     </script>
 
